@@ -38,30 +38,26 @@ export default function OmliWeb() {
   const sharedPlayerRef = useRef<SharedAudioPlayer | null>(null);
   const historyRef = useRef<ChatHistoryItem[]>([]);
 
+  const storageKey = session?.user?.email
+    ? `omli_chat_history_${session.user.email}`
+    : "omli_chat_history_guest";
+
+  useEffect(() => {
+    const savedHistory = localStorage.getItem(storageKey);
+    if (savedHistory) {
+      const parsed = JSON.parse(savedHistory);
+      setHistory(parsed);
+      historyRef.current = parsed;
+    } else {
+      setHistory([]);
+      historyRef.current = [];
+    }
+  }, [storageKey]);
+
   useEffect(() => {
     historyRef.current = history;
-  }, [history]);
-
-  const saveHistory = async (nextHistory: ChatHistoryItem[]) => {
-    await fetch("/api/history", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ history: nextHistory }),
-    });
-  };
-
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    const loadHistory = async () => {
-      const res = await fetch("/api/history");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data.history)) {
-        setHistory(data.history);
-      }
-    };
-    loadHistory();
-  }, [session?.user?.id]);
+    localStorage.setItem(storageKey, JSON.stringify(history));
+  }, [history, storageKey]);
 
   useEffect(() => {
     let isMounted = true;
@@ -85,7 +81,6 @@ export default function OmliWeb() {
           
           const updatedHistory = [...historyRef.current, userMsg];
           setHistory(updatedHistory);
-          saveHistory(updatedHistory);
 
           setIsListening(false);
           isBusyRef.current = true;
@@ -105,7 +100,6 @@ export default function OmliWeb() {
             const aiMsg: ChatHistoryItem = { id: Date.now() + 1, role: "ai", content: data.text };
             const withAi = [...historyRef.current, aiMsg];
             setHistory(withAi);
-            saveHistory(withAi);
 
             const result = await ttsRef.current?.synthesize(data.text);
             if (result && sharedPlayerRef.current) {
@@ -147,19 +141,24 @@ export default function OmliWeb() {
 
   const clearChat = () => {
     setHistory([]);
-    saveHistory([]);
+    localStorage.removeItem(storageKey);
     setText("History cleared!");
   };
 
   return (
-    <div className="flex min-h-screen bg-[#ead9fd] overflow-hidden font-sans">
+    <div className="min-h-screen relative overflow-hidden bg-linear-to-br from-[#f7ecff] via-[#ead9fd] to-[#d9f0ff] font-sans">
+      <div className="pointer-events-none absolute -top-24 -left-20 h-64 w-64 rounded-full bg-purple-300/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-16 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-24 h-56 w-56 rounded-full bg-pink-300/30 blur-3xl" />
+
+      <div className="flex min-h-screen">
       <AnimatePresence>
         {showHistory && (
           <motion.div
             initial={{ x: -300 }}
             animate={{ x: 0 }}
             exit={{ x: -300 }}
-            className="fixed left-0 top-0 z-50 h-full w-90 bg-white shadow-2xl p-6 flex flex-col"
+            className="fixed left-0 top-0 z-50 h-full w-90 bg-white/90 backdrop-blur-xl shadow-2xl p-6 flex flex-col border-r border-white/60"
           >
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold text-purple-900 flex items-center gap-2">
@@ -178,7 +177,7 @@ export default function OmliWeb() {
                 </div>
               ) : (
                 history.map((item) => (
-                  <div 
+                  <div
                     key={item.id} 
                     className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
                       item.role === 'user' 
@@ -205,23 +204,23 @@ export default function OmliWeb() {
       <div className="flex flex-1 flex-col items-center justify-center p-6 relative">
         <button 
           onClick={() => setShowHistory(true)}
-          className="absolute top-8 left-8 p-4 bg-white rounded-2xl shadow-lg hover:bg-purple-50 transition-all group active:scale-90"
+          className="absolute top-8 left-8 p-4 bg-white/80 backdrop-blur rounded-2xl shadow-lg hover:bg-purple-50 transition-all group active:scale-90"
         >
           <MessageSquare className="text-purple-600 group-hover:scale-110 transition-transform" size={28} />
         </button>
 
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="absolute top-8 right-8 px-4 py-2 rounded-2xl bg-white shadow-lg text-sm font-semibold text-purple-900 hover:bg-purple-50 transition-all active:scale-90"
+          className="absolute top-8 right-8 px-4 py-2 rounded-2xl bg-white/80 backdrop-blur shadow-lg text-sm font-semibold text-purple-900 hover:bg-purple-50 transition-all active:scale-90"
         >
           Log out
         </button>
 
-        <div className="relative mb-8 max-w-sm rounded-4xl bg-white px-8 py-6 shadow-md border-b-4 border-purple-200">
+        <div className="relative mb-8 max-w-md rounded-4xl bg-white/85 backdrop-blur px-8 py-6 shadow-lg border border-white/60">
           <p className="text-center text-lg font-semibold text-purple-900 leading-snug">
             {text}
           </p>
-          <div className="absolute -bottom-3 left-1/2 h-6 w-6 -translate-x-1/2 rotate-45 bg-white border-r border-b border-purple-100"></div>
+          <div className="absolute -bottom-3 left-1/2 h-6 w-6 -translate-x-1/2 rotate-45 bg-white/90 border-r border-b border-purple-100"></div>
         </div>
 
         <motion.div
@@ -236,7 +235,7 @@ export default function OmliWeb() {
           <button
             onClick={handleInteraction}
             disabled={!isReady || isBusy}
-            className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] transition-all active:scale-90 ${
+            className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-white/90 backdrop-blur shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] transition-all active:scale-90 ${
               isListening ? "ring-4 ring-purple-400" : "hover:shadow-purple-200"
             }`}
           >
@@ -256,6 +255,7 @@ export default function OmliWeb() {
             </p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
