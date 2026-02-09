@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Trash2, MessageSquare, X } from "lucide-react"; 
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import type { STTLogic, TTSLogic } from "speech-to-speech";
 import penguinImg from "../penguin.jpeg";
 
@@ -22,6 +22,7 @@ interface ChatHistoryItem {
 }
 
 export default function OmliWeb() {
+  const { data: session } = useSession();
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [text, setText] = useState("Hi! I am Omli. Let's talk!");
@@ -36,22 +37,31 @@ export default function OmliWeb() {
   const ttsRef = useRef<TTSLogic | null>(null);
   const sharedPlayerRef = useRef<SharedAudioPlayer | null>(null);
   const historyRef = useRef<ChatHistoryItem[]>([]);
-  
-  useEffect(() => {
-    const savedHistory = localStorage.getItem("omli_chat_history");
-    if (savedHistory) {
-      const parsed = JSON.parse(savedHistory);
-      setHistory(parsed);
-      historyRef.current = parsed; 
-    }
-  }, []);
 
   useEffect(() => {
-    if (history.length > 0) {
-      localStorage.setItem("omli_chat_history", JSON.stringify(history));
-    }
     historyRef.current = history;
   }, [history]);
+
+  const saveHistory = async (nextHistory: ChatHistoryItem[]) => {
+    await fetch("/api/history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ history: nextHistory }),
+    });
+  };
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const loadHistory = async () => {
+      const res = await fetch("/api/history");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.history)) {
+        setHistory(data.history);
+      }
+    };
+    loadHistory();
+  }, [session?.user?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -75,6 +85,7 @@ export default function OmliWeb() {
           
           const updatedHistory = [...historyRef.current, userMsg];
           setHistory(updatedHistory);
+          saveHistory(updatedHistory);
 
           setIsListening(false);
           isBusyRef.current = true;
@@ -92,7 +103,9 @@ export default function OmliWeb() {
             setText(data.text);
 
             const aiMsg: ChatHistoryItem = { id: Date.now() + 1, role: "ai", content: data.text };
-            setHistory(prev => [...prev, aiMsg]);
+            const withAi = [...historyRef.current, aiMsg];
+            setHistory(withAi);
+            saveHistory(withAi);
 
             const result = await ttsRef.current?.synthesize(data.text);
             if (result && sharedPlayerRef.current) {
@@ -134,7 +147,7 @@ export default function OmliWeb() {
 
   const clearChat = () => {
     setHistory([]);
-    localStorage.removeItem("omli_chat_history");
+    saveHistory([]);
     setText("History cleared!");
   };
 
