@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Trash2, MessageSquare, X } from "lucide-react"; 
-import { signOut, useSession } from "next-auth/react";
+import { Trash2, MessageSquare, X } from "lucide-react";
+import { signOut, signIn, useSession } from "next-auth/react";
 import type { STTLogic, TTSLogic } from "speech-to-speech";
 import penguinImg from "../penguin.jpeg";
 
@@ -22,13 +22,13 @@ interface ChatHistoryItem {
 }
 
 export default function OmliWeb() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [text, setText] = useState("Hi! I am Omli. Let's talk!");
+  const [text, setText] = useState("Hi! I am Bunny. Let's talk!");
   const [isReady, setIsReady] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  
+
   const [history, setHistory] = useState<ChatHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -39,8 +39,32 @@ export default function OmliWeb() {
   const historyRef = useRef<ChatHistoryItem[]>([]);
 
   const storageKey = session?.user?.email
-    ? `omli_chat_history_${session.user.email}`
-    : "omli_chat_history_guest";
+    ? `Bunni_chat_history_${session.user.email}`
+    : "Bunni_chat_history_guest";
+
+  const audioProcessingQueue = useRef<string[]>([]);
+  const isProcessingQueue = useRef(false);
+
+  const processSequentialAudio = useCallback(async () => {
+    if (isProcessingQueue.current || audioProcessingQueue.current.length === 0) return;
+
+    isProcessingQueue.current = true;
+    const sentence = audioProcessingQueue.current.shift();
+
+    if (sentence && ttsRef.current && sharedPlayerRef.current) {
+      try {
+        const result = await ttsRef.current.synthesize(sentence);
+        if (result) {
+          sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
+        }
+      } catch (err) {
+        console.error("TTS Synthesis Error:", err);
+      }
+    }
+
+    isProcessingQueue.current = false;
+    processSequentialAudio();
+  }, []);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem(storageKey);
@@ -55,8 +79,8 @@ export default function OmliWeb() {
   }, [storageKey]);
 
   useEffect(() => {
-    historyRef.current = history;
     localStorage.setItem(storageKey, JSON.stringify(history));
+    historyRef.current = history;
   }, [history, storageKey]);
 
   useEffect(() => {
@@ -78,7 +102,6 @@ export default function OmliWeb() {
           if (!clean || isBusyRef.current) return;
 
           const userMsg: ChatHistoryItem = { id: Date.now(), role: "user", content: clean };
-          
           const updatedHistory = [...historyRef.current, userMsg];
           setHistory(updatedHistory);
 
@@ -92,20 +115,56 @@ export default function OmliWeb() {
             const res = await fetch("/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chatHistory: updatedHistory }), 
+              body: JSON.stringify({ chatHistory: updatedHistory }),
             });
-            const data = await res.json();
-            setText(data.text);
 
-            const aiMsg: ChatHistoryItem = { id: Date.now() + 1, role: "ai", content: data.text };
-            const withAi = [...historyRef.current, aiMsg];
-            setHistory(withAi);
+            if (!res.body) throw new Error("Stream body missing");
 
-            const result = await ttsRef.current?.synthesize(data.text);
-            if (result && sharedPlayerRef.current) {
-              sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+
+            let fullAIContent = "";
+            let currentSentenceBuffer = "";
+            const processedSentences = new Set<string>();
+
+            setText("");
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = decoder.decode(value, { stream: true });
+              fullAIContent += chunk;
+              currentSentenceBuffer += chunk;
+
+              setText(fullAIContent);
+
+              if (/[.!?]/.test(chunk)) {
+                const sentences = currentSentenceBuffer.split(/(?<=[.!?])\s+/);
+                const toProcess = sentences.slice(0, -1);
+
+                for (const s of toProcess) {
+                  const trimmed = s.trim();
+                  if (trimmed && !processedSentences.has(trimmed)) {
+                    processedSentences.add(trimmed);
+                    audioProcessingQueue.current.push(trimmed);
+                    processSequentialAudio();
+                  }
+                }
+                currentSentenceBuffer = sentences[sentences.length - 1] || "";
+              }
             }
-          } catch {
+
+            if (currentSentenceBuffer.trim() && !processedSentences.has(currentSentenceBuffer.trim())) {
+              audioProcessingQueue.current.push(currentSentenceBuffer.trim());
+              processSequentialAudio();
+            }
+
+            const aiMsg: ChatHistoryItem = { id: Date.now() + 1, role: "ai", content: fullAIContent };
+            setHistory(prev => [...prev, aiMsg]);
+
+          } catch (err) {
+            console.error("Chat Error:", err);
             setText("Oops! Something went wrong.");
           } finally {
             isBusyRef.current = false;
@@ -119,15 +178,19 @@ export default function OmliWeb() {
       if (isMounted) setIsReady(true);
     };
 
-    initSpeech();
+    if (session) {
+      initSpeech();
+    }
+
     return () => {
       isMounted = false;
       sttRef.current?.stop();
     };
-  }, []);
+  }, [processSequentialAudio, session]);
 
   const handleInteraction = () => {
     if (!isReady) return;
+    if (isSpeaking) return;
     if (isListening) {
       sttRef.current?.stop();
       setIsListening(false);
@@ -145,20 +208,45 @@ export default function OmliWeb() {
     setText("History cleared!");
   };
 
-  return (
-    <div className="min-h-screen relative overflow-hidden bg-linear-to-br from-[#f7ecff] via-[#ead9fd] to-[#d9f0ff] font-sans">
-      <div className="pointer-events-none absolute -top-24 -left-20 h-64 w-64 rounded-full bg-purple-300/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-16 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/3 -right-24 h-56 w-56 rounded-full bg-pink-300/30 blur-3xl" />
+  if (status === "loading") {
+    return <div className="flex min-h-screen items-center justify-center bg-[#ead9fd]">Loading Bunny...</div>;
+  }
 
-      <div className="flex min-h-screen">
+  if (!session) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#ead9fd] p-6 text-center">
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-8">
+          <Image src={penguinImg} alt="Omli Penguin" width={200} height={200} className="rounded-full shadow-2xl" />
+        </motion.div>
+        <h1 className="mb-4 text-4xl font-black text-purple-900">Bunni Kids AI</h1>
+        <p className="mb-8 text-lg font-medium text-purple-700">Login with Google to start your magical conversation!</p>
+        <button
+          onClick={() => signIn("google")}
+          className="rounded-full bg-white px-10 py-4 text-xl font-bold text-purple-600 shadow-xl transition-all hover:scale-105 active:scale-95"
+        >
+          🚀 Sign In with Google
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-[#ead9fd] overflow-hidden font-sans">
+      <div className="bubbles-container">
+        <div className="bubble" style={{ width: '80px', height: '80px', left: '10%', animationDuration: '8s' }}></div>
+        <div className="bubble" style={{ width: '40px', height: '40px', left: '20%', animationDuration: '12s', animationDelay: '2s' }}></div>
+        <div className="bubble" style={{ width: '100px', height: '100px', left: '35%', animationDuration: '15s' }}></div>
+        <div className="bubble" style={{ width: '60px', height: '60px', left: '50%', animationDuration: '10s', animationDelay: '5s' }}></div>
+        <div className="bubble" style={{ width: '90px', height: '90px', left: '70%', animationDuration: '14s' }}></div>
+        <div className="bubble" style={{ width: '50px', height: '50px', left: '85%', animationDuration: '11s', animationDelay: '3s' }}></div>
+      </div>
       <AnimatePresence>
         {showHistory && (
           <motion.div
             initial={{ x: -300 }}
             animate={{ x: 0 }}
             exit={{ x: -300 }}
-            className="fixed left-0 top-0 z-50 h-full w-90 bg-white/90 backdrop-blur-xl shadow-2xl p-6 flex flex-col border-r border-white/60"
+            className="fixed left-0 top-0 z-50 h-full w-90 bg-white shadow-2xl p-6 flex flex-col"
           >
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold text-purple-900 flex items-center gap-2">
@@ -178,12 +266,11 @@ export default function OmliWeb() {
               ) : (
                 history.map((item) => (
                   <div
-                    key={item.id} 
-                    className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                      item.role === 'user' 
-                        ? 'bg-purple-600 text-white ml-6 rounded-tr-none' 
-                        : 'bg-gray-100 text-gray-800 mr-6 rounded-tl-none border border-gray-200'
-                    }`}
+                    key={item.id}
+                    className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${item.role === 'user'
+                      ? 'bg-purple-600 text-white ml-6 rounded-tr-none'
+                      : 'bg-gray-100 text-gray-800 mr-6 rounded-tl-none border border-gray-200'
+                      }`}
                   >
                     {item.content}
                   </div>
@@ -202,25 +289,28 @@ export default function OmliWeb() {
       </AnimatePresence>
 
       <div className="flex flex-1 flex-col items-center justify-center p-6 relative">
-        <button 
+        <button
           onClick={() => setShowHistory(true)}
-          className="absolute top-8 left-8 p-4 bg-white/80 backdrop-blur rounded-2xl shadow-lg hover:bg-purple-50 transition-all group active:scale-90"
+          className="absolute top-8 left-8 p-4 bg-white rounded-2xl shadow-lg hover:bg-purple-50 transition-all group active:scale-90"
         >
           <MessageSquare className="text-purple-600 group-hover:scale-110 transition-transform" size={28} />
         </button>
 
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="absolute top-8 right-8 px-4 py-2 rounded-2xl bg-white/80 backdrop-blur shadow-lg text-sm font-semibold text-purple-900 hover:bg-purple-50 transition-all active:scale-90"
-        >
-          Log out
-        </button>
+        <div className="absolute top-8 right-8 flex items-center gap-4">
+          <span className="hidden md:block text-sm font-bold text-purple-900">Hi, {session.user?.name}!</span>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="px-4 py-2 rounded-2xl bg-white shadow-lg text-sm font-semibold text-purple-900 hover:bg-purple-50 transition-all active:scale-90"
+          >
+            Log out
+          </button>
+        </div>
 
-        <div className="relative mb-8 max-w-md rounded-4xl bg-white/85 backdrop-blur px-8 py-6 shadow-lg border border-white/60">
+        <div className="relative mb-8 max-w-sm rounded-4xl bg-white px-8 py-6 shadow-md border-b-4 border-purple-200">
           <p className="text-center text-lg font-semibold text-purple-900 leading-snug">
             {text}
           </p>
-          <div className="absolute -bottom-3 left-1/2 h-6 w-6 -translate-x-1/2 rotate-45 bg-white/90 border-r border-b border-purple-100"></div>
+          <div className="absolute -bottom-3 left-1/2 h-6 w-6 -translate-x-1/2 rotate-45 bg-white border-r border-b border-purple-100"></div>
         </div>
 
         <motion.div
@@ -234,14 +324,14 @@ export default function OmliWeb() {
         <div className="flex flex-col items-center gap-6">
           <button
             onClick={handleInteraction}
-            disabled={!isReady || isBusy}
-            className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-white/90 backdrop-blur shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] transition-all active:scale-90 ${
-              isListening ? "ring-4 ring-purple-400" : "hover:shadow-purple-200"
-            }`}
+            disabled={!isReady || isBusy || isSpeaking}
+            className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-lg transition-all 
+            ${(isListening) ? "ring-4 ring-purple-400" : ""} 
+            ${(isSpeaking || isBusy) ? "opacity-50 cursor-not-allowed" : "active:scale-90 hover:shadow-purple-200"}`}
           >
             <div className="text-4xl">{isListening ? "🎤" : "🎙️"}</div>
             {isListening && (
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0.8, opacity: 0.6 }}
                 animate={{ scale: 2, opacity: 0 }}
                 transition={{ repeat: Infinity, duration: 1.5 }}
@@ -251,11 +341,11 @@ export default function OmliWeb() {
           </button>
           <div className="text-center">
             <p className="text-sm font-black tracking-[0.2em] text-purple-700 uppercase">
-              {isListening ? "I'm listening..." : "Tap to talk"}
+              {isSpeaking ? "Bunni is talking..." : isListening ? "I'm listening..." : "Tap to talk"}
+              {/* {isListening ? "I'm listening..." : "Tap to talk"} */}
             </p>
           </div>
         </div>
-      </div>
       </div>
     </div>
   );
