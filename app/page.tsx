@@ -6,7 +6,6 @@ import Image from "next/image";
 import { Trash2, MessageSquare, X } from "lucide-react";
 import { signOut, signIn, useSession } from "next-auth/react";
 import type { STTLogic, TTSLogic } from "speech-to-speech";
-// import penguinImg from "../penguin.jpeg";
 import bunni2Img from "../bunni3.jpeg";
 
 interface SharedAudioPlayer {
@@ -26,7 +25,7 @@ export default function OmliWeb() {
   const { data: session, status } = useSession();
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [text, setText] = useState("Hi! I am Bunny. Let's talk!");
+  const [text, setText] = useState("Hi! I am Bunni. Let's talk!");
   const [isReady, setIsReady] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
@@ -41,22 +40,7 @@ export default function OmliWeb() {
   const historyRef = useRef<ChatHistoryItem[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // const addParticles = (e: React.MouseEvent) => {
-  //   const newParticle = {
-  //     id: Date.now(),
-  //     x: e.clientX,
-  //     y: e.clientY,
-  //   };
-  //   setParticles((prev) => [...prev, newParticle]);
-
-  //   // 1 second baad particle ko hata do taaki memory full na ho
-  //   setTimeout(() => {
-  //     setParticles((prev) => prev.filter((p) => p.id !== newParticle.id));
-  //   }, 1000);
-  // };
-
   const addParticles = (e: React.MouseEvent) => {
-    // Ek click par 4 particles
     const newItems = [1, 2, 3, 4, 5, 6, 7].map((i) => ({
       id: Date.now() + i,
       x: e.clientX + (Math.random() * 40 - 20), // Thoda random phailao
@@ -223,10 +207,8 @@ export default function OmliWeb() {
   useEffect(() => {
     if (videoRef.current) {
       if (isSpeaking) {
-        // Jab AI bole toh video play karein
         videoRef.current.play().catch(err => console.error("Video play error:", err));
       } else {
-        // Jab AI chup ho toh video pause karke shuruat par le jayein
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
       }
@@ -254,38 +236,15 @@ export default function OmliWeb() {
   };
 
   if (status === "loading") {
-    return <div className="flex min-h-screen items-center justify-center bg-magical">Loading Bunny...</div>;
+    return <div className="flex min-h-screen items-center justify-center bg-magical">Loading Bunni...</div>;
   }
-
-  // if (!session) {
-  //   return (
-  //     <div className="flex min-h-screen flex-col items-center justify-center bg-magical p-6 text-center ">
-        // <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-8">
-        //   <Image src={bunni2Img} alt="Omli Penguin" width={200} height={200} className="rounded-full shadow-2xl" />
-        // </motion.div>
-  //       {/* <h1 className="mb-4 text-4xl font-black text-purple-900">Bunni Kids AI</h1> */}
-  // <h1 className="mb-4 text-4xl font-black bg-clip-text text-transparent bg-linear-to-r from-purple-600 to-pink-500 animate-pulse">
-  //   Bunni Kids AI
-  // </h1>
-  // <p className="mb-8 text-lg font-medium text-purple-700">Login with Google to start your magical conversation!</p>
-  // <button
-  //   onClick={() => signIn("google")}
-  //   className="rounded-full bg-white px-10 py-4 text-xl font-bold text-purple-600 shadow-xl transition-all hover:scale-105 active:scale-95"
-  // >
-  //   🚀 Sign In with Google
-  // </button>
-  //     </div>
-  //   );
-  // }
 
   if (!session) {
     return (
-      // Click event yahan bhi add kar diya
       <div
         className="flex min-h-screen flex-col items-center justify-center bg-magical p-6 text-center relative overflow-hidden"
         onClick={addParticles}
       >
-        {/* Sparkle Particles Render karein */}
         {particles.map((p) => (
           <motion.div
             key={p.id}
@@ -297,7 +256,6 @@ export default function OmliWeb() {
           />
         ))}
 
-        {/* Bubbles Background (Login par bhi dikhega) */}
         <div className="bubbles-container">
           <div className="bubble" style={{ width: '100px', height: '100px', left: '15%', animationDuration: '10s' }}></div>
           <div className="bubble" style={{ width: '60px', height: '60px', left: '75%', animationDuration: '15s', animationDelay: '2s' }}></div>
@@ -413,16 +371,7 @@ export default function OmliWeb() {
             Log out
           </button>
         </div>
-        {/* <motion.div
-          animate={{ y: [0, -5, 0] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          className="relative mb-8 max-w-sm rounded-4xl bg-white/80 backdrop-blur-md px-8 py-6 shadow-xl border-b-4 border-purple-300"
-        >
-          <p className="text-center text-lg font-bold text-purple-900 leading-snug">
-            {text}
-          </p>
-          <div className="absolute -bottom-3 left-1/2 h-6 w-6 -translate-x-1/2 rotate-45 bg-white/80"></div>
-        </motion.div> */}
+        
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
@@ -436,7 +385,6 @@ export default function OmliWeb() {
         </motion.div>
 
         <motion.div
-          // Animation ko scale mein badal diya hai video ke liye
           animate={isSpeaking ? { scale: [1, 1.02, 1] } : {}}
           transition={{ repeat: Infinity, duration: 2 }}
           className="relative z-10 mb-10 overflow-hidden rounded-full shadow-2xl border-4 border-white"
@@ -472,7 +420,6 @@ export default function OmliWeb() {
           <div className="text-center">
             <p className="text-sm font-black tracking-[0.2em] text-purple-700 uppercase">
               {isSpeaking ? "Bunni is talking..." : isListening ? "I'm listening..." : "Tap to talk"}
-              {/* {isListening ? "I'm listening..." : "Tap to talk"} */}
             </p>
           </div>
         </div>
