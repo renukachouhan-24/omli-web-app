@@ -1,4 +1,4 @@
-@import "tailwindcss";
+/* @import "tailwindcss";
 
  :root {
 --background: #ffffff;
@@ -28,9 +28,9 @@ body {
 .bubble {
   position: absolute;
   bottom: -100px;
-  background-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.8);
   border-radius: 50%;
-  opacity: 0.6;
+  opacity: 0.9;
   animation: rise 10s infinite ease-in;
 }
 
@@ -54,4 +54,140 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #d1b3ff;
   border-radius: 10px;
+}
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: gold;
+  box-shadow: 0 0 10px white;
+  border-radius: 50%;
+  animation: twinkle 1s infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+} */
+
+
+@import "tailwindcss";
+
+:root {
+  /* Candy Land Colors */
+  --background: #ead9fd; 
+  --foreground: #2d1b4e;
+  --glass-bg: rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.6);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  /* Next.js Layout se Lexend font apply hoga, par fallback ke liye ye rakha hai */
+  font-family: 'Lexend', 'Comic Sans MS', sans-serif;
+  /* Magical Wand Cursor */
+  cursor: url('https://img.icons8.com/color/48/magic-wand.png'), auto;
+}
+
+/* --- MOVING GRADIENT BACKGROUND --- */
+.bg-magical {
+  background: linear-gradient(-45deg, #ead9fd, #d1b3ff, #fbcfe8, #e9d5ff);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  min-height: 100vh;
+  width: 100%;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* --- IMPROVED BUBBLES --- */
+.bubbles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; 
+  overflow: hidden;
+  pointer-events: none; /* Bubbles click block nahi karenge */
+}
+
+/* .bubble {
+  position: absolute;
+  bottom: -100px;
+  background: radial-gradient(circle at 30% 30%, white, rgba(255, 255, 255, 0.3));
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  animation: rise 12s infinite ease-in-out;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.5);
+} */
+ .bubble {
+  position: absolute;
+  bottom: -100px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(209, 179, 255, 0.4));
+  border: 2px solid rgba(255, 255, 255, 0.8); /* Border moti kar di */
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6), inset 0 0 10px white;
+  animation: rise 12s infinite ease-in-out;
+}
+
+@keyframes rise {
+  0% { bottom: -100px; transform: translateX(0) scale(1) rotate(0deg); }
+  33% { transform: translateX(50px) scale(1.1) rotate(20deg); }
+  66% { transform: translateX(-50px) scale(0.9) rotate(-20deg); }
+  100% { bottom: 110%; transform: translateX(20px) scale(1) rotate(0deg); }
+}
+
+/* --- GLASSMORPHISM CARDS --- */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid var(--glass-border);
+  border-radius: 2rem;
+  box-shadow: 0 8px 32px 0 rgba(147, 51, 234, 0.1);
+}
+
+/* --- SPARKLES --- */
+/* .sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 10px #ffd700);
+  animation: twinkle 1.5s infinite;
+} */
+ .sparkle {
+  position: absolute;
+  width: 15px; /* Size bada diya */
+  height: 15px;
+  background: rgb(155, 30, 169);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); /* Star shape */
+  filter: drop-shadow(0 0 8px #fff) drop-shadow(0 0 12px #ffd700);
+  z-index: 9999; /* Sabse upar dikhega */
+}
+
+@keyframes twinkle {
+  0%, 100% { transform: scale(0.5); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* --- SCROLLBAR --- */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #d1b3ff, #fbcfe8);
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
