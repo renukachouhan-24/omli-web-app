@@ -1,37 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🐰 Bunni Kids AI
+A Magical, Voice-First AI Companion for Kids
+Bunni Kids AI is an interactive web application designed to provide a safe, engaging, and magical conversational experience for children. Powered by advanced AI and synchronized video animations, Bunni isn't just a chatbot—she's a friend who listens, talks, and reacts in real-time.
 
-## Getting Started
+🚀 Live Demo: https://omli-web-app.onrender.com/
 
-First, run the development server:
+✨ Features
+🎙️ Voice-First Interaction: Uses high-performance Speech-to-Text (STT) to let kids talk naturally without needing to type.
+🎬 Real-Time Video Sync: Bunni's animations are perfectly synced with the AI's speech. When she speaks, the video plays; when she pauses, she stays still.
+🧠 Intelligent Brain: Powered by NVIDIA Llama 3.1 for safe, educational, and friendly responses.
+🌟 Magical UI:
+Click Sparkles: Interactive star particles follow every touch.
+Floating Bubbles: A dreamlike, animated background.
+Glassmorphism: A modern, soft "frosted glass" interface designed for kids.
+🔐 Secure Login: Integrated with NextAuth and Google Provider to keep chat histories safe.
+📜 Memory & History: Bunni remembers your conversation during the session, and users can view their "Chat Logs" anytime.
 
-```bash
+🛠️ Tech Stack
+Framework: Next.js 15+ (App Router)
+AI Model: NVIDIA Llama 3.1 (via Streaming API)
+Styling: Tailwind CSS v4
+Animations: Framer Motion
+Authentication: NextAuth.js
+Voice: Custom STT/TTS Logic via speech-to-speech
+Deployment: Render
+
+🚀 Getting Started
+Prerequisites
+Node.js 18+
+A Google Cloud Console project (for OAuth)
+NVIDIA API Key
+
+Installation
+Clone the repository
+git clone https://github.com/your-username/omli-web-app.git
+cd omli-web-app
+
+Install dependencies
+npm install
+
+Set up Environment Variables Create a .env.local file in the root directory:
+Code snippet
+GOOGLE_CLIENT_ID=your_id
+GOOGLE_CLIENT_SECRET=your_secret
+NEXTAUTH_SECRET=your_random_secret
+NVIDIA_API_KEY=your_key
+
+Run locally
+Bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+📂 Project Structure
+/app: Main Next.js App Router logic.
+/public: Static assets like the rabbit_video.mp4 and images.
+/api: Backend routes for AI streaming and authentication.
+globals.css: Custom magical animations, bubble effects, and star particles.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# Bunni-web-app
+🎨 UI Preview
+Font: Lexend (Soft & Accessible)
+Design: Candy-land theme with moving gradients.
+Interactive: Every click generates a motion.div star particle.
