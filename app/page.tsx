@@ -61,17 +61,42 @@ export default function OmliWeb() {
   const audioProcessingQueue = useRef<string[]>([]);
   const isProcessingQueue = useRef(false);
 
+  // const processSequentialAudio = useCallback(async () => {
+  //   if (isProcessingQueue.current || audioProcessingQueue.current.length === 0) return;
+
+  //   isProcessingQueue.current = true;
+  //   const sentence = audioProcessingQueue.current.shift();
+
+  //   if (sentence && ttsRef.current && sharedPlayerRef.current) {
+  //     try {
+  //       const result = await ttsRef.current.synthesize(sentence);
+  //       if (result) {
+  //         sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
+  //       }
+  //     } catch (err) {
+  //       console.error("TTS Synthesis Error:", err);
+  //     }
+  //   }
+
+  //   isProcessingQueue.current = false;
+  //   processSequentialAudio();
+  // }, []);
+
   const processSequentialAudio = useCallback(async () => {
     if (isProcessingQueue.current || audioProcessingQueue.current.length === 0) return;
 
     isProcessingQueue.current = true;
-    const sentence = audioProcessingQueue.current.shift();
+    const rawSentence = audioProcessingQueue.current.shift();
 
-    if (sentence && ttsRef.current && sharedPlayerRef.current) {
+    if (rawSentence && ttsRef.current && sharedPlayerRef.current) {
       try {
-        const result = await ttsRef.current.synthesize(sentence);
-        if (result) {
-          sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
+        const cleanSentence = rawSentence.replace(/\*.*?\*/g, '').trim();
+
+        if (cleanSentence) {
+          const result = await ttsRef.current.synthesize(cleanSentence);
+          if (result) {
+            sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
+          }
         }
       } catch (err) {
         console.error("TTS Synthesis Error:", err);
@@ -276,7 +301,7 @@ export default function OmliWeb() {
 
         <button
           onClick={() => signIn("google")}
-          className="rounded-full bg-white px-10 py-4 text-xl font-bold text-purple-600 shadow-xl transition-all hover:scale-105 active:scale-95"
+          className="rounded-full bg-white/70 px-10 py-4 text-xl font-bold text-purple-600 shadow-xl transition-all hover:scale-105 active:scale-95"
         >
           🚀 Sign In with Google
         </button>
@@ -312,7 +337,7 @@ export default function OmliWeb() {
             initial={{ x: -300 }}
             animate={{ x: 0 }}
             exit={{ x: -300 }}
-            className="fixed left-0 top-0 z-50 h-full w-90 bg-white shadow-2xl p-6 flex flex-col"
+            className="fixed left-0 top-0 z-50 h-full w-90 glass-card shadow-2xl p-6 flex flex-col"
           >
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold text-purple-900 flex items-center gap-2">
@@ -346,7 +371,7 @@ export default function OmliWeb() {
 
             <button
               onClick={clearChat}
-              className="mt-6 flex items-center justify-center gap-2 w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold hover:bg-red-100 transition-all border border-red-100 active:scale-95"
+              className="mt-6 flex items-center justify-center gap-2 w-full py-4 bg-white text-red-600 rounded-2xl font-bold transition-all border border-red-100 active:scale-95"
             >
               <Trash2 size={18} /> Delete All History
             </button>
@@ -357,7 +382,7 @@ export default function OmliWeb() {
       <div className="flex flex-1 flex-col items-center justify-center p-6 relative">
         <button
           onClick={() => setShowHistory(true)}
-          className="absolute top-8 left-8 p-4 bg-white rounded-2xl shadow-lg hover:bg-purple-50 transition-all group active:scale-90"
+          className="absolute top-8 left-8 p-4 bg-white/60 rounded-2xl shadow-lg hover:bg-purple-50 transition-all group active:scale-90"
         >
           <MessageSquare className="text-purple-600 group-hover:scale-110 transition-transform" size={28} />
         </button>
@@ -366,12 +391,12 @@ export default function OmliWeb() {
           <span className="hidden md:block text-sm font-bold text-purple-900">Hi, {session.user?.name}!</span>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="px-4 py-2 rounded-2xl bg-white shadow-lg text-sm font-semibold text-purple-900 hover:bg-purple-50 transition-all active:scale-90"
+            className="px-4 py-2 rounded-2xl bg-white/60 shadow-lg text-sm font-semibold text-purple-900 hover:bg-purple-50 transition-all active:scale-90"
           >
             Log out
           </button>
         </div>
-        
+
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
@@ -403,7 +428,7 @@ export default function OmliWeb() {
           <button
             onClick={handleInteraction}
             disabled={!isReady || isBusy || isSpeaking}
-            className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-lg transition-all 
+            className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-white/60 shadow-lg transition-all 
             ${(isListening) ? "ring-4 ring-purple-400" : ""} 
             ${(isSpeaking || isBusy) ? "opacity-50 cursor-not-allowed" : "active:scale-90 hover:shadow-purple-200"}`}
           >
