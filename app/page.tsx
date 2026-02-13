@@ -61,42 +61,17 @@ export default function OmliWeb() {
   const audioProcessingQueue = useRef<string[]>([]);
   const isProcessingQueue = useRef(false);
 
-  // const processSequentialAudio = useCallback(async () => {
-  //   if (isProcessingQueue.current || audioProcessingQueue.current.length === 0) return;
-
-  //   isProcessingQueue.current = true;
-  //   const sentence = audioProcessingQueue.current.shift();
-
-  //   if (sentence && ttsRef.current && sharedPlayerRef.current) {
-  //     try {
-  //       const result = await ttsRef.current.synthesize(sentence);
-  //       if (result) {
-  //         sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
-  //       }
-  //     } catch (err) {
-  //       console.error("TTS Synthesis Error:", err);
-  //     }
-  //   }
-
-  //   isProcessingQueue.current = false;
-  //   processSequentialAudio();
-  // }, []);
-
   const processSequentialAudio = useCallback(async () => {
     if (isProcessingQueue.current || audioProcessingQueue.current.length === 0) return;
 
     isProcessingQueue.current = true;
-    const rawSentence = audioProcessingQueue.current.shift();
+    const sentence = audioProcessingQueue.current.shift();
 
-    if (rawSentence && ttsRef.current && sharedPlayerRef.current) {
+    if (sentence && ttsRef.current && sharedPlayerRef.current) {
       try {
-        const cleanSentence = rawSentence.replace(/\*.*?\*/g, '').trim();
-
-        if (cleanSentence) {
-          const result = await ttsRef.current.synthesize(cleanSentence);
-          if (result) {
-            sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
-          }
+        const result = await ttsRef.current.synthesize(sentence);
+        if (result) {
+          sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
         }
       } catch (err) {
         console.error("TTS Synthesis Error:", err);
@@ -396,7 +371,7 @@ export default function OmliWeb() {
             Log out
           </button>
         </div>
-
+        
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
@@ -452,3 +427,5 @@ export default function OmliWeb() {
     </div>
   );
 }
+
+// bunni 
