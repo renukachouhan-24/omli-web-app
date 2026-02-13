@@ -61,17 +61,44 @@ export default function OmliWeb() {
   const audioProcessingQueue = useRef<string[]>([]);
   const isProcessingQueue = useRef(false);
 
+  // const processSequentialAudio = useCallback(async () => {
+  //   if (isProcessingQueue.current || audioProcessingQueue.current.length === 0) return;
+
+  //   isProcessingQueue.current = true;
+  //   const sentence = audioProcessingQueue.current.shift();
+
+  //   if (sentence && ttsRef.current && sharedPlayerRef.current) {
+  //     try {
+  //       const result = await ttsRef.current.synthesize(sentence);
+  //       if (result) {
+  //         sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
+  //       }
+  //     } catch (err) {
+  //       console.error("TTS Synthesis Error:", err);
+  //     }
+  //   }
+
+  //   isProcessingQueue.current = false;
+  //   processSequentialAudio();
+  // }, []);
+
   const processSequentialAudio = useCallback(async () => {
     if (isProcessingQueue.current || audioProcessingQueue.current.length === 0) return;
 
     isProcessingQueue.current = true;
-    const sentence = audioProcessingQueue.current.shift();
+    const rawSentence = audioProcessingQueue.current.shift();
 
-    if (sentence && ttsRef.current && sharedPlayerRef.current) {
+    if (rawSentence && ttsRef.current && sharedPlayerRef.current) {
       try {
-        const result = await ttsRef.current.synthesize(sentence);
-        if (result) {
-          sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
+        // ✨ CLEANING LOGIC: Yeh symbols aur action text (like *hops*) ko remove kar dega
+        const cleanSentence = rawSentence.replace(/\*.*?\*/g, '').trim();
+
+        // Agar sentence cleaning ke baad khali nahi hai, tabhi bolna shuru kare
+        if (cleanSentence) {
+          const result = await ttsRef.current.synthesize(cleanSentence);
+          if (result) {
+            sharedPlayerRef.current.addAudioIntoQueue(result.audio, result.sampleRate);
+          }
         }
       } catch (err) {
         console.error("TTS Synthesis Error:", err);
@@ -371,7 +398,7 @@ export default function OmliWeb() {
             Log out
           </button>
         </div>
-        
+
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
