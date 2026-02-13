@@ -1,88 +1,137 @@
-🐰 Bunni Kids AI
-A Magical, Voice-First AI Companion for Kids
+# 🐰 Bunni Kids AI
+
+## A Magical, Voice-First AI Companion for Kids
+
 Bunni Kids AI is an interactive web application designed to provide a safe, engaging, and magical conversational experience for children. Powered by advanced AI and synchronized video animations, Bunni isn't just a chatbot—she's a friend who listens, talks, and reacts in real-time.
 
-🚀 Live Demo: https://omli-web-app.onrender.com/
+🚀 **Live Demo:** https://omli-web-app.onrender.com/
 
-✨ Features
-🎙️ Voice-First Interaction: Uses high-performance Speech-to-Text (STT) to let kids talk naturally without needing to type.
+---
 
-🎬 Real-Time Video Sync: Bunni's animations are perfectly synced with the AI's speech. When she speaks, the video plays; when she pauses, she stays still.
+## ✨ Features
 
-🧠 Intelligent Brain: Powered by NVIDIA Llama 3.1 for safe, educational, and friendly responses.
+- 🎙️ **Voice-First Interaction**: Uses high-performance Speech-to-Text (STT) to let kids talk naturally without needing to type.
 
-🌟 Magical UI:
+- 🎬 **Real-Time Video Sync**: Bunni's animations are perfectly synced with the AI's speech. When she speaks, the video plays; when she pauses, she stays still.
 
-Click Sparkles: Interactive star particles follow every touch.
+- 🧠 **Intelligent Brain**: Powered by NVIDIA Llama 3.1 for safe, educational, and friendly responses.
 
-Floating Bubbles: A dreamlike, animated background.
+- 🌟 **Magical UI**:
+  - **Click Sparkles**: Interactive star particles follow every touch.
+  - **Floating Bubbles**: A dreamlike, animated background.
+  - **Glassmorphism**: A modern, soft "frosted glass" interface designed for kids.
 
-Glassmorphism: A modern, soft "frosted glass" interface designed for kids.
+- 🔐 **Secure Login**: Integrated with NextAuth and Google Provider to keep chat histories safe.
 
-🔐 Secure Login: Integrated with NextAuth and Google Provider to keep chat histories safe.
+- 📜 **Memory & History**: Bunni remembers your conversation during the session, and users can view their "Chat Logs" anytime.
 
-📜 Memory & History: Bunni remembers your conversation during the session, and users can view their "Chat Logs" anytime.
+---
 
-🛠️ Tech Stack
-Framework: Next.js 15+ (App Router)
+## 🛠️ Tech Stack
 
-AI Model: NVIDIA Llama 3.1 (via Streaming API)
+- **Framework**: Next.js 15+ (App Router)
+- **AI Model**: NVIDIA Llama 3.1 (via Streaming API)
+- **Styling**: Tailwind CSS v4
+- **Animations**: Framer Motion
+- **Authentication**: NextAuth.js
+- **Voice**: Custom STT/TTS Logic via speech-to-speech
+- **Deployment**: Render
 
-Styling: Tailwind CSS v4
+---
 
-Animations: Framer Motion
+## 🚀 Getting Started
 
-Authentication: NextAuth.js
+### Prerequisites
 
-Voice: Custom STT/TTS Logic via speech-to-speech
+- Node.js 18+
+- A Google Cloud Console project (for OAuth)
+- NVIDIA API Key
 
-Deployment: Render
+### Installation
 
-🚀 Getting Started
-Prerequisites
-Node.js 18+
+1. **Clone the repository**
 
-A Google Cloud Console project (for OAuth)
-
-NVIDIA API Key
-
-Installation
-Clone the repository
-
-Bash
-
-git clone https://github.com/your-username/omli-web-app.git
+```bash
+git clone https://github.com/renukachouhan-24/omli-web-app.git
 cd omli-web-app
-Install dependencies
+```
 
-Bash
+2. **Install dependencies**
 
+```bash
 npm install
-Set up Environment Variables Create a .env.local file in the root directory:
+```
 
-Code snippet
+3. **Set up Environment Variables**
 
+Create a `.env.local` file in the root directory:
+
+```env
 GOOGLE_CLIENT_ID=your_id
 GOOGLE_CLIENT_SECRET=your_secret
 NEXTAUTH_SECRET=your_random_secret
 NVIDIA_API_KEY=your_key
-Run locally
+```
 
-Bash
+4. **Run locally**
 
+```bash
 npm run dev
-📂 Project Structure
-/app: Main Next.js App Router logic.
+```
 
-/public: Static assets like the rabbit_video.mp4 and images.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the app.
 
-/api: Backend routes for AI streaming and authentication.
+---
 
-globals.css: Custom magical animations, bubble effects, and star particles.
+## 📂 Project Structure
 
-🎨 UI Preview
-Font: Lexend (Soft & Accessible)
+```
+omli-web-app/
+├── app/              # Main Next.js App Router logic
+├── public/           # Static assets (rabbit_video.mp4, images)
+├── api/              # Backend routes for AI streaming and authentication
+└── globals.css       # Custom magical animations, bubble effects, and star particles
+```
 
-Design: Candy-land theme with moving gradients.
+---
 
-Interactive: Every click generates a motion.div star particle.
+## 🎨 UI Preview
+
+- **Font**: Lexend (Soft & Accessible)
+- **Design**: Candy-land theme with moving gradients
+- **Interactive**: Every click generates a `motion.div` star particle
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📝 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+## 👤 Author
+
+**Renuka Chouhan**
+- GitHub: [@renukachouhan-24](https://github.com/renukachouhan-24)
+
+---
+
+## 🌟 Show your support
+
+Give a ⭐️ if this project helped you or you find it interesting!
+
+---
+
+**Made with ❤️ for kids everywhere**
